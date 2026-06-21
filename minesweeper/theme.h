@@ -85,7 +85,7 @@ namespace Theme {
         if (flagSprite.id == 0) flagSprite = LoadTexture("assets/flag.png");
 
         if (gridShader.id == 0) {
-            gridShader = LoadShader(0, "grid.fs");
+            gridShader = LoadShader(0, "./assets/grid.glsl");
 
             gridShaderGridSizeLoc = GetShaderLocation(gridShader, "gridSize");
             gridShaderCellSizeLoc = GetShaderLocation(gridShader, "cellSize");
@@ -122,8 +122,6 @@ namespace Theme {
 
     inline void DrawBaseSlice(float x, float y, int gridSize, float cellSize) {
         float boardWidth = gridSize * cellSize;
-
-        DrawRectangleRounded({ x - 8, y - 8, boardWidth + 16, boardWidth + 16 }, 0.05f, 8, bgSlice);
 
         if (gridShader.id != 0 && cellRevealRT.id != 0) {
             Vector2 gridSizeVec = { (float)gridSize, (float)gridSize };

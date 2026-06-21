@@ -125,10 +125,10 @@ public:
         float sliceStride = boardWidth + slicePadding;
 
         int startZ = std::max((int)(screenStart.x / sliceStride), 0);
-        int endZ = std::min((int)(screenEnd.x / sliceStride + 1), ground->size);
+        int endZ = std::min((uint64_t)(screenEnd.x / sliceStride + 1), ground->size);
 
         int startW = std::max((int)(screenStart.y / sliceStride), 0);
-        int endW = std::min((int)(screenEnd.y / sliceStride + 1), ground->size);
+        int endW = std::min((uint64_t)(screenEnd.y / sliceStride + 1), ground->size);
 
         float visualSize = cam.zoom * cellSize;
         bool highDetailMode = visualSize > 15.0f;
@@ -143,10 +143,10 @@ public:
                 float sliceY = w * sliceStride;
 
                 int startX = std::max((int)((screenStart.x - sliceX) / cellSize), 0);
-                int endX = std::min((int)((screenEnd.x - sliceX) / cellSize + 1), ground->size);
+                int endX = std::min((uint64_t)((screenEnd.x - sliceX) / cellSize + 1), ground->size);
 
                 int startY = std::max((int)((screenStart.y - sliceY) / cellSize), 0);
-                int endY = std::min((int)((screenEnd.y - sliceY) / cellSize + 1), ground->size);
+                int endY = std::min((uint64_t)((screenEnd.y - sliceY) / cellSize + 1), ground->size);
 
                 if (startX >= ground->size || endX <= 0 || startY >= ground->size || endY <= 0) continue;
 

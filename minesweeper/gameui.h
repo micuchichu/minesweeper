@@ -1,8 +1,12 @@
-#include "raylib.h"
-#include "theme.h"
-#include <algorithm>
+#pragma once
 
-#define XRAY true
+#include "raylib.h"
+#include "theme.h" 
+#include <algorithm>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 namespace GameUI {
     const Color Zinc900 = { 24, 24, 27, 245 };
@@ -29,6 +33,9 @@ namespace GameUI {
     }
 
     inline float DrawSpinner(float x, float y, const char* label, int& value, int minVal, int maxVal) {
+        static const char* activeSpinner = nullptr;
+        static char editBuffer[32] = "";
+
         DrawText(label, x, y + 6, 18, Zinc400);
         int labelW = MeasureText(label, 18);
 
@@ -38,17 +45,75 @@ namespace GameUI {
         bool minusClicked = Button("-", minusX, y, 28, 28, Zinc700, Zinc600);
         bool plusClicked = Button("+", plusX, y, 28, 28, Zinc700, Zinc600);
 
-        const char* valText = TextFormat("%d", value);
-        int valW = MeasureText(valText, 20);
-        DrawText(valText, plusX + 36, y + 5, 20, WHITE);
+        bool isActive = (activeSpinner == label);
+        const char* displayStr = isActive ? editBuffer : TextFormat("%d", value);
+
+        int textW = MeasureText(displayStr, 20);
+        float boxWidth = std::max(40.0f, (float)textW + 16.0f);
+        Rectangle textRect = { plusX + 36, y, boxWidth, 28 };
+
+        Vector2 mPos = GetCRTMousePosition();
+        bool textHovered = CheckCollisionPointRec(mPos, textRect);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            if (textHovered) {
+                activeSpinner = label;
+                snprintf(editBuffer, sizeof(editBuffer), "%d", value);
+            }
+            else if (isActive) {
+                value = (editBuffer[0] != '\0') ? std::clamp(atoi(editBuffer), minVal, maxVal) : minVal;
+                activeSpinner = nullptr;
+                isActive = false;
+            }
+        }
+
+        if (isActive) {
+            int key = GetCharPressed();
+            while (key > 0) {
+                if (key >= '0' && key <= '9' && strlen(editBuffer) < 15) {
+                    int len = strlen(editBuffer);
+                    editBuffer[len] = (char)key;
+                    editBuffer[len + 1] = '\0';
+                }
+                key = GetCharPressed();
+            }
+
+            if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressedRepeat(KEY_BACKSPACE)) {
+                int len = strlen(editBuffer);
+                if (len > 0) editBuffer[len - 1] = '\0';
+            }
+
+            if (IsKeyPressed(KEY_ENTER)) {
+                value = (editBuffer[0] != '\0') ? std::clamp(atoi(editBuffer), minVal, maxVal) : minVal;
+                activeSpinner = nullptr;
+                isActive = false;
+            }
+        }
+
+        DrawRectangleRounded(textRect, 0.2f, 4, isActive ? Zinc800 : (textHovered ? Zinc700 : BLANK));
+
+        if (isActive) {
+            DrawRectangleLinesEx(textRect, 2.0f, Green500);
+
+            if ((int)(GetTime() * 2) % 2 == 0) {
+                int currentTextW = MeasureText(editBuffer, 20);
+                DrawRectangle(textRect.x + 8 + currentTextW + 2, textRect.y + 4, 2, 20, WHITE);
+            }
+        }
+
+        DrawText(displayStr, textRect.x + 8, textRect.y + 5, 20, WHITE);
 
         if (minusClicked || plusClicked) {
+            if (isActive) {
+                value = (editBuffer[0] != '\0') ? std::clamp(atoi(editBuffer), minVal, maxVal) : minVal;
+                activeSpinner = nullptr;
+            }
             int step = IsKeyDown(KEY_LEFT_SHIFT) ? 10 : 1;
             if (minusClicked) value = std::max(minVal, value - step);
             if (plusClicked) value = std::min(maxVal, value + step);
         }
 
-        return plusX + 36 + valW + 30;
+        return textRect.x + textRect.width + 10;
     }
 
     inline void DrawHeader(int screenW, int dim, int bombsLeft, float timePlayed) {

@@ -3,6 +3,9 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
+#include <random>
+#include <bit>
+#include <algorithm>
 
 struct StateBoard {
     std::vector<uint64_t> data;
@@ -13,9 +16,7 @@ struct StateBoard {
 
     inline void set(size_t index, uint8_t state) {
         size_t block = index / 32;
-
         if (block >= data.size()) return;
-
         size_t offset = (index % 32) * 2;
 
         data[block] &= ~(3ULL << offset);
@@ -24,12 +25,23 @@ struct StateBoard {
 
     inline uint8_t get(size_t index) const {
         size_t block = index / 32;
-
         if (block >= data.size()) return 0;
-
         size_t offset = (index % 32) * 2;
 
         return (data[block] >> offset) & 3ULL;
+    }
+
+    inline size_t countRevealed() const {
+        size_t count = 0;
+        for (uint64_t block : data) {
+            uint64_t lower = block & 0x5555555555555555ULL;
+            uint64_t upper = (block >> 1) & 0x5555555555555555ULL;
+
+            uint64_t revealed = lower & ~upper;
+
+            count += std::popcount(revealed);
+        }
+        return count;
     }
 };
 
@@ -41,7 +53,6 @@ struct DynamicBitBoard {
     void init(size_t total_cells, size_t bits_per_cell) {
         bpc = bits_per_cell;
         mask = (1ULL << bpc) - 1;
-
         data.assign((((total_cells * bpc) + 63) / 64) + 2, 0ULL);
     }
 
@@ -53,7 +64,6 @@ struct DynamicBitBoard {
     inline void set(size_t index, uint64_t val) {
         size_t bit_pos = index * bpc;
         size_t block = bit_pos / 64;
-
         if (block >= data.size()) return;
 
         size_t offset = bit_pos % 64;
@@ -81,7 +91,6 @@ struct DynamicBitBoard {
     inline uint64_t get(size_t index) const {
         size_t bit_pos = index * bpc;
         size_t block = bit_pos / 64;
-
         if (block >= data.size()) return 0;
 
         size_t offset = bit_pos % 64;

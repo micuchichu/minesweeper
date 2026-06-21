@@ -9,10 +9,16 @@
 
 #define XRAY true
 
+#ifdef NDEBUG
+#ifdef _WIN32
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#endif
+#endif
+
 int main() {
-    int DIM = 2;
-    int GRID_SIZE = 2000;
-    int BOMBS = 2000000;
+    int DIM = 4;
+    int GRID_SIZE = 4;
+    int BOMBS = 4;
 
     GroundND ground;
     ground.init(DIM, GRID_SIZE);
@@ -22,16 +28,17 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1000, 900, "minsper");
 
-    Shader postProcess = LoadShader(nullptr, "./shader.fs");
+    Shader postProcess = LoadShader(nullptr, "./assets/shader.glsl");
     int timeLoc = GetShaderLocation(postProcess, "time");
     int resLoc = GetShaderLocation(postProcess, "resolution");
 
     RenderTexture2D target = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
-    IVisualizer* activeUI = new Vis2D_Standard(GRID_SIZE, BOMBS);
-    activeUI->Init(&ground);
+    IVisualizer* activeUI = new Vis4D_Slices(GRID_SIZE, BOMBS);
 
-	Theme::InitGlobalAssets();
+    Theme::InitGlobalAssets();
+
+    activeUI->Init(&ground);
 
     float timePlayed = 0.0f;
 
@@ -43,6 +50,10 @@ int main() {
     bool alertOn = false;
 
     while (!WindowShouldClose()) {
+
+        if (IsKeyPressed(KEY_F11)) {
+            ToggleFullscreen();
+		}
 
         if (IsWindowResized()) {
             UnloadRenderTexture(target);

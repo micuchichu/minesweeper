@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include "raylib.h"
 #include "raymath.h"
 #include <vector>
@@ -40,7 +38,7 @@ namespace Particles {
             float speed = RandomFloat(500.0f, 6000.0f);
             activeParticles.push_back({
                 position,
-                { cos(angle) * speed, sin(angle) * speed },
+                { (float)cos(angle) * speed, (float)sin(angle) * speed },
                 color,
                 RandomFloat(0.5f, 1.5f),
                 1.5f,
@@ -58,7 +56,7 @@ namespace Particles {
             float speed = RandomFloat(200.0f, 600.0f);
             activeParticles.push_back({
                 position,
-                { cos(angle) * speed, sin(angle) * speed },
+                { (float)cos(angle) * speed, (float)sin(angle) * speed },
                 color,
                 RandomFloat(0.2f, 0.5f),
                 0.5f,

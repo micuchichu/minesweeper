@@ -55,10 +55,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.fs">
+    <None Include="assets\grid.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="grid.fs">
+    <None Include="assets\shader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

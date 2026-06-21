@@ -3,12 +3,15 @@
 #include <cstdint>
 #include "bitboards.h"
 
+#include <random>
+#include <bit>
+
 struct GroundND {
-    int dimensions;
-    int size;
-    int total_cells;
-    int blocks;
-    int revealed_cells = 0;
+    uint8_t dimensions;
+    uint64_t size;
+    uint64_t total_cells;
+    uint64_t blocks;
+    uint64_t revealed_cells = 0;
 
     std::vector<uint64_t> bombs;
 
@@ -30,4 +33,16 @@ struct GroundND {
     }
 };
 
-void generateBombsExact(GroundND& ground, int numMines);
+inline void generateBombsExact(GroundND& ground, size_t numMines) {
+    std::mt19937_64 rng(std::random_device{}());
+    std::uniform_int_distribution<unsigned long long> dist(0, ground.total_cells - 1);
+
+    size_t placed = 0;
+    while (placed < numMines) {
+        size_t index = (size_t)dist(rng);
+        if (!ground.getBomb(index)) {
+            ground.setBomb(index);
+            placed++;
+        }
+    }
+}

@@ -3,12 +3,15 @@
 #include "visualizer.h"
 #include "theme.h"
 #include "particles.h"
+#include "engine.h"
 
 #include <algorithm>
 #include <cmath>
 
 #include "raylib.h"
 #include "raymath.h"
+
+#include <iostream>
 
 class Vis2D_Standard : public IVisualizer {
 private:
@@ -64,7 +67,7 @@ public:
                 else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                     if (state == 0) {
                         ground->reveal(hoveredIndex);
-                        ground->revealed_cells++;
+                        std::cout << ground->revealed_cells << "/" << ground->total_cells - BOMBS << std::endl;
 
                         Vector2 exactWorldPos = { (x * cellSize) + (cellSize / 2.0f), (y * cellSize) + (cellSize / 2.0f) };
 
@@ -106,10 +109,10 @@ public:
         Vector2 screenEnd = GetScreenToWorld2D({ (float)GetScreenWidth(), (float)GetScreenHeight() }, cam);
 
         int startX = std::max((int)(screenStart.x / cellSize), 0);
-        int endX = std::min((int)(screenEnd.x / cellSize + 1), ground->size);
+        int endX = std::min((uint64_t)(screenEnd.x / cellSize + 1), ground->size);
 
         int startY = std::max((int)(screenStart.y / cellSize), 0);
-        int endY = std::min((int)(screenEnd.y / cellSize + 1), ground->size);
+        int endY = std::min((uint64_t)(screenEnd.y / cellSize + 1), ground->size);
 
         float visualSize = cam.zoom * cellSize;
         bool highDetailMode = visualSize > 15.0f;
