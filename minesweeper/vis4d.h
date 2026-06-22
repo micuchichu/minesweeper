@@ -3,6 +3,7 @@
 #include "visualizer.h"
 #include "theme.h"
 #include "particles.h"
+#include "network.h"
 
 #include <algorithm>
 #include <cmath>
@@ -17,9 +18,10 @@ private:
     float slicePadding = 45.0f;
     float boardWidth;
     int hoveredIndex = -1;
+    NetworkManager* net;
 
 public:
-    Vis4D_Slices(int& gridSize, int& bombs) : IVisualizer(gridSize, bombs) {}
+    Vis4D_Slices(int& gridSize, int& bombs, NetworkManager* network) : IVisualizer(gridSize, bombs), net(network) {}
 
     void OnInit() override {
         cam = { 0 };
@@ -42,6 +44,25 @@ public:
             Vector2 mouseWorldAfter = GetScreenToWorld2D(GetCRTMousePosition(), cam);
             cam.target.x += mouseWorldBefore.x - mouseWorldAfter.x;
             cam.target.y += mouseWorldBefore.y - mouseWorldAfter.y;
+        }
+
+        Vector2 worldMouse = GetScreenToWorld2D(GetMousePosition(), cam);
+        static Vector2 lastSentMouse = { -9999.0f, -9999.0f };
+
+        if (Vector2Distance(worldMouse, lastSentMouse) > 2.0f && net->role != NetRole::OFFLINE) {
+            lastSentMouse = worldMouse;
+            PacketCursor pc;
+            pc.x = worldMouse.x;
+            pc.y = worldMouse.y;
+
+            if (net->role == NetRole::CLIENT) {
+                pc.playerID = 0;
+                net->SendToServer(&pc, sizeof(pc), false);
+            }
+            else if (net->role == NetRole::HOST) {
+                pc.playerID = 0;
+                net->Broadcast(&pc, sizeof(pc), false);
+            }
         }
 
         hoveredIndex = -1;
@@ -70,23 +91,62 @@ public:
                             int state = ground->state.get(hoveredIndex);
 
                             if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-                                if (state == 0) ground->state.set(hoveredIndex, 2);
-                                else if (state == 2) ground->state.set(hoveredIndex, 0);
+                                if (net->role == NetRole::CLIENT) {
+#ifndef NDEBUG
+                                    std::cout << "[VIS4D] CLIENT: Sending Right Click (Flag) at index " << hoveredIndex << " to Host.\n";
+#endif
+                                    PacketClick p; p.index = hoveredIndex; p.action = 2;
+                                    net->SendToServer(&p, sizeof(p));
+                                }
+                                else {
+#ifndef NDEBUG
+                                    std::cout << "[VIS4D] HOST/OFFLINE: Local Right Click (Flag) at index " << hoveredIndex << ".\n";
+#endif
+                                    if (state == 0) ground->state.set(hoveredIndex, 2);
+                                    else if (state == 2) ground->state.set(hoveredIndex, 0);
+
+                                    if (net->role == NetRole::HOST) {
+#ifndef NDEBUG
+                                        std::cout << "[VIS4D] HOST: Broadcasting Right Click result to clients.\n";
+#endif
+                                        PacketResult res; res.index = hoveredIndex; res.state = 2;
+                                        net->Broadcast(&res, sizeof(res));
+                                    }
+                                }
                             }
                             else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                                if (state == 0) {
-                                    ground->reveal(hoveredIndex);
-                                    ground->revealed_cells++;
+                                if (net->role == NetRole::CLIENT) {
+#ifndef NDEBUG
+                                    std::cout << "[VIS4D] CLIENT: Sending Left Click (Reveal) at index " << hoveredIndex << " to Host.\n";
+#endif
+                                    PacketClick p; p.index = hoveredIndex; p.action = 0;
+                                    net->SendToServer(&p, sizeof(p));
+                                }
+                                else {
+                                    if (state == 0) {
+#ifndef NDEBUG
+                                        std::cout << "[VIS4D] HOST/OFFLINE: Local Left Click (Reveal) at index " << hoveredIndex << ".\n";
+#endif
+                                        ground->reveal(hoveredIndex);
 
-									Vector2 exactWorldPos = { (x * cellSize) + (cellSize / 2.0f) + (z * sliceStride), (y * cellSize) + (cellSize / 2.0f) + (w * sliceStride) };
+                                        Vector2 exactWorldPos = { (x * cellSize) + (cellSize / 2.0f) + (z * sliceStride), (y * cellSize) + (cellSize / 2.0f) + (w * sliceStride) };
 
-                                    if (ground->getBomb(hoveredIndex)) {
-                                        gameOver = true;
-                                        Particles::EmitExplosion(exactWorldPos, 100, Theme::cellFlag);
-                                    }
-                                    else {
-                                        if (ground->revealed_cells == ground->total_cells - BOMBS) victory = true;
-                                        Particles::EmitDebris(exactWorldPos, 8, Theme::labelText);
+                                        if (ground->getBomb(hoveredIndex)) {
+                                            gameOver = true;
+                                            Particles::EmitExplosion(exactWorldPos, 100, Theme::cellFlag);
+                                        }
+                                        else {
+                                            if (ground->revealed_cells == ground->total_cells - BOMBS) victory = true;
+                                            Particles::EmitDebris(exactWorldPos, 8, Theme::labelText);
+                                        }
+
+                                        if (net->role == NetRole::HOST) {
+#ifndef NDEBUG
+                                            std::cout << "[VIS4D] HOST: Broadcasting Left Click result to clients.\n";
+#endif
+                                            PacketResult res; res.index = hoveredIndex; res.state = 0;
+                                            net->Broadcast(&res, sizeof(res));
+                                        }
                                     }
                                 }
                             }
@@ -101,14 +161,38 @@ public:
         BeginMode2D(cam);
 
         if ((gameOver || victory) && IsKeyPressed(KEY_R)) {
-            Particles::Clear();
-            ground->clear();
-            generateBombsExact(*ground, BOMBS);
-            ground->buildCache();
-            ground->state.init(ground->total_cells);
-            ground->revealed_cells = 0;
-            gameOver = false;
-            victory = false;
+            if ((net->role != NetRole::CLIENT)) {
+#ifndef NDEBUG
+                std::cout << "[VIS4D] HOST/OFFLINE: Processing Restart request.\n";
+#endif
+                Particles::Clear();
+                ground->clear();
+
+                if (net->role == NetRole::HOST) {
+#ifndef NDEBUG
+                    std::cout << "[VIS4D] HOST: Broadcasting new board INIT (seed) to clients.\n";
+#endif
+                    ground->seed = (uint64_t)GetTime() * 1000;
+                    PacketInit p;
+                    p.dim = ground->dimensions;
+                    p.size = ground->size;
+                    p.bombs = BOMBS;
+                    p.seed = ground->seed;
+                    net->Broadcast(&p, sizeof(p));
+                }
+
+                generateBombsExact(*ground, BOMBS);
+                ground->buildCache();
+                ground->state.init(ground->total_cells);
+                ground->revealed_cells = 0;
+                gameOver = false;
+                victory = false;
+            }
+#ifndef NDEBUG
+            else {
+                std::cout << "[VIS4D] CLIENT: Tried to press 'R', but only the Host can restart.\n";
+            }
+#endif
         }
 
         int hX = -1, hY = -1, hZ = -1, hW = -1;
@@ -178,6 +262,22 @@ public:
         }
 
         Particles::UpdateAndDraw();
+
+        for (auto const& pair : net->remoteCursors) {
+            uint32_t id = pair.first;
+            float cx = pair.second.x;
+            float cy = pair.second.y;
+
+            Color curCol = Theme::cellFlag;
+            if (id != 0) {
+                curCol = ColorFromHSV(fmod(id * 137.5f, 360.0f), 0.8f, 1.0f);
+            }
+
+            DrawCircle(cx, cy, 10, curCol);
+
+            const char* nameTag = (id == 0) ? "HOST" : TextFormat("P%d", id);
+            DrawText(nameTag, cx + 14, cy + 16, 12, WHITE);
+        }
 
         EndMode2D();
     }

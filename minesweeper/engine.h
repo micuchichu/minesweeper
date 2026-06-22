@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <cstdint>
 #include "bitboards.h"
@@ -12,6 +13,7 @@ struct GroundND {
     uint64_t total_cells;
     uint64_t blocks;
     uint64_t revealed_cells = 0;
+    uint64_t seed;
 
     std::vector<uint64_t> bombs;
 
@@ -33,8 +35,8 @@ struct GroundND {
     }
 };
 
-inline void generateBombsExact(GroundND& ground, size_t numMines) {
-    std::mt19937_64 rng(std::random_device{}());
+inline void generateBombsExact(GroundND& ground, size_t numMines, uint64_t seed) {
+    std::mt19937_64 rng(seed);
     std::uniform_int_distribution<unsigned long long> dist(0, ground.total_cells - 1);
 
     size_t placed = 0;
@@ -45,4 +47,8 @@ inline void generateBombsExact(GroundND& ground, size_t numMines) {
             placed++;
         }
     }
+}
+
+inline void generateBombsExact(GroundND& ground, size_t numMines) {
+    generateBombsExact(ground, numMines, std::random_device{}());
 }

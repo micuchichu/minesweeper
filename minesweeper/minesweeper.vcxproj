@@ -138,9 +138,14 @@
     <ClCompile Include="minesweeper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app.h" />
+    <ClInclude Include="appstate.h" />
     <ClInclude Include="bitboards.h" />
     <ClInclude Include="engine.h" />
+    <ClInclude Include="gamehud.h" />
     <ClInclude Include="gameui.h" />
+    <ClInclude Include="menu.h" />
+    <ClInclude Include="network.h" />
     <ClInclude Include="particles.h" />
     <ClInclude Include="theme.h" />
     <ClInclude Include="vis2d.h" />

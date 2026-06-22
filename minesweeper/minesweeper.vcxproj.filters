@@ -16,6 +16,15 @@
     <Filter Include="Header Files\visualizer">
       <UniqueIdentifier>{f60704c3-ba62-4d83-9836-0ef5591ae0d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\networking">
+      <UniqueIdentifier>{4329a071-356f-4b6a-be24-8accede20f67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\hud">
+      <UniqueIdentifier>{7b1b69a8-90e4-4a42-b7a2-9398fc475ee1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\backend">
+      <UniqueIdentifier>{e6f0a4ac-6df5-4d97-a74c-f2c83d999eb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="minesweeper.cpp">
@@ -26,12 +35,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="engine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bitboards.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="visualizer.h">
       <Filter>Header Files\visualizer</Filter>
     </ClInclude>
@@ -44,14 +47,35 @@
     <ClInclude Include="theme.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gameui.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vis2d.h">
       <Filter>Header Files\visualizer</Filter>
     </ClInclude>
     <ClInclude Include="particles.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="network.h">
+      <Filter>Header Files\networking</Filter>
+    </ClInclude>
+    <ClInclude Include="app.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameui.h">
+      <Filter>Header Files\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="menu.h">
+      <Filter>Header Files\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="gamehud.h">
+      <Filter>Header Files\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="bitboards.h">
+      <Filter>Header Files\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.h">
+      <Filter>Header Files\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="appstate.h">
+      <Filter>Header Files\backend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

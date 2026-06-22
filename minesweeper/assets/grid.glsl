@@ -29,5 +29,6 @@ void main() {
 
         finalColor = texture(texture0, uvInCell);
     }
+
     finalColor *= fragColor;
 }

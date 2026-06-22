@@ -3,6 +3,8 @@
 #include "raylib.h"
 #include "raymath.h"
 
+#include <iostream>
+
 inline Vector2 GetCRTMousePosition() {
     Vector2 mouse = GetMousePosition();
     float screenW = (float)GetScreenWidth();
@@ -195,7 +197,7 @@ namespace Theme {
             if (isNeighbor) {
                 if (isHovered) {
                     DrawRectangleLinesEx(cellRect, 2.0f, WHITE);
-                    DrawRectangleRounded(cellRect, cornerRoundness, 4, Fade(WHITE, 0.15f));
+                    DrawRectangleRounded(cellRect, cornerRoundness, 4, Fade(WHITE, 0.25f));
                 }
                 else {
                     DrawRectangleRounded(cellRect, cornerRoundness, 4, Fade(WHITE, 0.08f));
